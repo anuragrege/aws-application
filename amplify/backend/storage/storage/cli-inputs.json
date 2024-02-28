@@ -1,0 +1,14 @@
+{
+  "resourceName": "storage",
+  "policyUUID": "efe20588",
+  "bucketName": "awsstorage",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}

@@ -14,6 +14,12 @@
     "categories": {
       "auth": {
         "awsapplication3456d4f0": {}
+      },
+      "api": {
+        "awsapplication": {}
+      },
+      "storage": {
+        "storage": {}
       }
     }
   }
