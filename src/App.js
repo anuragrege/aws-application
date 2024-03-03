@@ -23,10 +23,14 @@ const client = generateClient();
 
 const App = ({ signOut }) => {
   const [notes, setNotes] = useState([]);
+  const [showCreateEvents, setShowCreateEvents] = useState(false);
+  const [showEventsList, setShowEventsList] = useState(false);
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (showEventsList) {
+      fetchNotes();
+    }
+  }, [showEventsList]);
 
   async function fetchNotes() {
     const apiData = await client.graphql({ query: listNotes });
@@ -45,24 +49,31 @@ const App = ({ signOut }) => {
 
   async function createNote(event) {
     event.preventDefault();
-    const form = new FormData(event.target);
-    const image = form.get("image");
+    const formData = new FormData(event.target);
+    const name = formData.get("name");
+    const description = formData.get("description");
+    const image = formData.get("image");
+
     const data = {
-      name: form.get("name"),
-      description: form.get("description"),
-      image: image.name,
+      name: name,
+      description: description,
+      image: image ? image.name : null,
     };
-    if (!!data.image)
+
+    if (image) {
       await uploadData({
-        key: data.name,
+        key: name,
         data: image,
       });
+    }
+
     await client.graphql({
       query: createNoteMutation,
       variables: { input: data },
     });
-    fetchNotes();
-    event.target.reset();
+
+    setShowCreateEvents(false);
+    setShowEventsList(true);
   }
 
   async function deleteNote({ id, name }) {
@@ -77,62 +88,82 @@ const App = ({ signOut }) => {
 
   return (
     <View className="App">
-      <Heading level={1}>My Notes App</Heading>
-      <View as="form" margin="3rem 0" onSubmit={createNote}>
-        <Flex direction="row" justifyContent="center">
-          <TextField
-            name="name"
-            placeholder="Note Name"
-            label="Note Name"
-            labelHidden
-            variation="quiet"
-            required
-          />
-          <TextField
-            name="description"
-            placeholder="Note Description"
-            label="Note Description"
-            labelHidden
-            variation="quiet"
-            required
-          />
-          <View
-            name="image"
-            as="input"
-            type="file"
-            style={{ alignSelf: "end" }}
-          />
-          <Button type="submit" variation="primary">
-            Create Note
+      {!showCreateEvents && !showEventsList && (
+        <React.Fragment>
+          <Button onClick={() => setShowCreateEvents(true)}>
+            Create Event
           </Button>
-        </Flex>
-      </View>
-      <Heading level={2}>Current Notes</Heading>
-      <View margin="3rem 0">
-        {notes.map((note) => (
-          <Flex
-            key={note.id || note.name}
-            direction="row"
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Text as="strong" fontWeight={700}>
-              {note.name}
-            </Text>
-            <Text as="span">{note.description}</Text>
-            {note.image && (
-              <Image
-                src={note.image}
-                alt={`visual aid for ${notes.name}`}
-                style={{ width: 400 }}
+          <Button onClick={() => setShowEventsList(true)}>
+            Display Events
+          </Button>
+        </React.Fragment>
+      )}
+
+      {showCreateEvents && (
+        <React.Fragment>
+          <Button onClick={() => setShowCreateEvents(false)}>Back</Button>
+          <Heading level={1}>Create Events</Heading>
+          <View as="form" margin="3rem 0" onSubmit={createNote}>
+            <Flex direction="column" justifyContent="center">
+              <TextField
+                name="name"
+                placeholder="Event Name"
+                label="Event Name"
+                labelHidden
+                variation="quiet"
+                required
               />
-            )}
-            <Button variation="link" onClick={() => deleteNote(note)}>
-              Delete note
-            </Button>
-          </Flex>
-        ))}
-      </View>
+              <TextField
+                name="description"
+                placeholder="Event Description"
+                label="Event Description"
+                labelHidden
+                variation="quiet"
+                required
+              />
+              <input type="file" accept="image/*" name="image" />
+              <Button type="submit" variation="primary">
+                Create Event
+              </Button>
+            </Flex>
+          </View>
+        </React.Fragment>
+      )}
+
+      {showEventsList && (
+        <React.Fragment>
+          <Button onClick={() => setShowEventsList(false)}>Back</Button>
+          <Heading level={2}>Current Events</Heading>
+          <View margin="3rem 0">
+            {notes.map((note) => (
+              <Flex
+                key={note.id || note.name}
+                direction="column"
+                justifyContent="center"
+                alignItems="center"
+              >
+                <Text as="strong" fontWeight={500} fontSize={30}>
+                  {note.name}
+                </Text>
+                {note.image && (
+                  <Image
+                    src={note.image}
+                    alt={`Visual aid for ${note.name}`}
+                    style={{ width: 400, height: 300 }}
+                  />
+                )}
+                <Text className="des" as="span">
+                  {note.description}
+                </Text>
+                <Button variation="link" onClick={() => deleteNote(note)}>
+                  Delete event
+                </Button>
+              </Flex>
+            ))}
+          </View>
+        </React.Fragment>
+      )}
+
       <Button onClick={signOut}>Sign Out</Button>
     </View>
   );
